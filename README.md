@@ -8,7 +8,7 @@ A minimal FastAPI-based server listening on `localhost` port `8000`.
 
 Run with [uv](https://docs.astral.sh/uv/):
 ```
-uv run python -m uvicorn main:app
+uv run main.py
 ```
 
 Run with Podman:

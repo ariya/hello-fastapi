@@ -1,5 +1,6 @@
-from datetime import datetime
+import uvicorn
 
+from datetime import datetime
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse, HTMLResponse
 from fastapi.routing import APIRoute
@@ -28,3 +29,6 @@ async def read_root():
 @app.get("/health")
 def health():
     return PlainTextResponse(content=f"OK {int(datetime.now().timestamp())}")
+
+
+uvicorn.run(app, host="0.0.0.0", port=8000)

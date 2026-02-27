@@ -14,4 +14,4 @@ RUN uv sync --no-dev --locked --no-install-project
 EXPOSE 8000
 
 
-CMD ["uv", "run", "python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0"]
+CMD ["uv", "run", "main.py"]

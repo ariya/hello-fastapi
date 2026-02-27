@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
- 
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -17,7 +17,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - run: uv run python -m uvicorn main:app &
+      - run: uv run main.py &
 
       - name: Run the health check validation
         run: while ! curl -s 'http://localhost:8000/health' | grep 'OK'; do sleep 1; done
