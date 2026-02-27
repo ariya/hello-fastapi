@@ -1,0 +1,28 @@
+name: Test with PyPy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 'pypy3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - run: uv run --python pypy3.11 main.py &
+
+      - name: Run the health check validation
+        run: while ! curl -s 'http://localhost:8000/health' | grep 'OK'; do sleep 1; done
+        timeout-minutes: 3
