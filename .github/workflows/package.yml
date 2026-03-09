@@ -1,0 +1,76 @@
+name: Package with PyInstaller
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.7"
+
+      - name: Build executable
+        run: uv run --group dev pyinstaller --onefile --name hello-fastapi main.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-fastapi-linux-x86_64
+          path: dist/hello-fastapi
+
+  test:
+    needs: package
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: hello-fastapi-linux-x86_64
+
+      - run: chmod +x hello-fastapi && ./hello-fastapi &
+
+      - name: Run the health check validation
+        run: while ! curl -s 'http://localhost:8000/health' | grep 'OK'; do sleep 1; done
+        timeout-minutes: 3
+
+      - run: curl -s http://localhost:8000
+
+  release:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: hello-fastapi-linux-x86_64
+
+      - name: Zip artifact
+        run: |
+          TAG="${{ github.event.repository.name }}-dev-${GITHUB_SHA::7}"
+          mkdir -p pkg/hello-fastapi
+          mv hello-fastapi pkg/hello-fastapi/
+          echo "$TAG" > pkg/hello-fastapi/VERSION
+          cd pkg && zip -r ../hello-fastapi-linux-64bit.zip hello-fastapi/
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${{ github.event.repository.name }}-dev-${GITHUB_SHA::7}"
+          gh release create "$TAG" hello-fastapi-linux-64bit.zip --title "$TAG"
